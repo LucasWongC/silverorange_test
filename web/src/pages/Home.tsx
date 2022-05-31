@@ -15,6 +15,7 @@ import { IRepo } from '../types';
 function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [rows, setRows] = useState<IRepo[]>([]);
+  const [languages, setLanguages] = useState<string[]>([]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -23,6 +24,18 @@ function Home() {
       // eslint-disable-next-line no-shadow
       const { repos } = response.data;
       setRows(repos);
+      const langs: string [] = [];
+      const obj: { [key: string]: boolean } = {};
+      const arr = repos.map((repo: IRepo) => {
+        return repo.language;
+      });
+      arr.forEach((lang: string) => (obj[lang] = true));
+      for (const lang in obj) {
+        if (lang) {
+          languages.push(lang);
+        }
+      }
+      setLanguages(langs);
     } catch (error) {
       // console.log(error);
     }
@@ -33,13 +46,43 @@ function Home() {
     fetchData();
   }, []);
 
+  const filterByLang = (lang: string) => {
+    setFilterModel({
+      items: [
+        {
+          columnField: 'language',
+          operatorValue: 'is',
+          value: lang,
+        },
+      ],
+    });
+  };
+
   return (
-    <Box>      
+    <Box>
+      <Box sx={{ my: 2 }}>
+        <ButtonGroup
+          variant="contained"
+          aria-label="outlined primary button group"
+        >
+          {languages.map((lang) => (
+            <Button
+              key={lang}
+              onClick={() => {
+                filterByLang(lang);
+              }}
+            >
+              {lang}
+            </Button>
+          ))}
+        </ButtonGroup>
+      </Box>
       <DataGrid
         rows={rows}
         columns={columns}
         autoHeight={true}
-        loading={loading}        
+        loading={loading}
+        filterModel={filterModel}        
       />
     </Box>
   );
