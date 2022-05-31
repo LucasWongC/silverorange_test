@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 import {
@@ -9,33 +10,42 @@ import {
   GridFilterModel,
   GridRowParams,
 } from '@mui/x-data-grid';
+import { Box, ButtonGroup, Button } from '@mui/material';
 
+import { useAppSelector, useAppDispatch } from '../app/hooks';
+import { setRepos } from '../slices/reposSlice';
 import { IRepo } from '../types';
 
 function Home() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
-  const [rows, setRows] = useState<IRepo[]>([]);
-  const [languages, setLanguages] = useState<string[]>([]);
+  const [filterModel, setFilterModel] = useState<GridFilterModel>();
+  const dispatch = useAppDispatch();
+  const repos: IRepo[] = useAppSelector((state) => state.repos.repos);
+  const rows: GridRowsProp = repos;
+  const languages: string[] = [];
+  const addButtons = () => {
+    const obj: { [key: string]: boolean } = {};
+    const arr = repos.map((repo: IRepo) => {
+      return repo.language;
+    });
+    arr.forEach((lang: string) => (obj[lang] = true));
+    for (const lang in obj) {
+      if (lang) {
+        languages.push(lang);
+      }
+    }
+  };
+  addButtons();
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:4000/repos');
+      const response = await axios.get('http://localhost:5000/repos');
       // eslint-disable-next-line no-shadow
       const { repos } = response.data;
-      setRows(repos);
-      const langs: string [] = [];
-      const obj: { [key: string]: boolean } = {};
-      const arr = repos.map((repo: IRepo) => {
-        return repo.language;
-      });
-      arr.forEach((lang: string) => (obj[lang] = true));
-      for (const lang in obj) {
-        if (lang) {
-          languages.push(lang);
-        }
-      }
-      setLanguages(langs);
+      dispatch(setRepos(repos));
+      // setRows(repos);
     } catch (error) {
       // console.log(error);
     }
@@ -43,7 +53,10 @@ function Home() {
   };
 
   useEffect(() => {
-    fetchData();
+    if (!repos.length) {
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filterByLang = (lang: string) => {
@@ -58,6 +71,9 @@ function Home() {
     });
   };
 
+  const handleRowClick = (params: GridRowParams) => {
+    navigate(`/repo/${params.row.id}`);
+  };
   return (
     <Box>
       <Box sx={{ my: 2 }}>
@@ -82,7 +98,8 @@ function Home() {
         columns={columns}
         autoHeight={true}
         loading={loading}
-        filterModel={filterModel}        
+        filterModel={filterModel}
+        onRowClick={handleRowClick}
       />
     </Box>
   );
