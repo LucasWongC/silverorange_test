@@ -41,7 +41,7 @@ function Home() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/repos');
+      const response = await axios.get('http://localhost:4000/repos');
       // eslint-disable-next-line no-shadow
       const { repos } = response.data;
       dispatch(setRepos(repos));
